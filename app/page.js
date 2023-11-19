@@ -1,95 +1,121 @@
-import Image from 'next/image'
-import styles from './page.module.css'
+"use client";
+import React, { useEffect, useState } from "react";
 
-export default function Home() {
+import Image from "next/image";
+
+import Carusel from "@/components/Carusel";
+import MyDrawer from "@/components/Drawer";
+import database from "@/database";
+
+import { useTheme } from "@mui/material/styles";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import Box from "@mui/material/Box";
+import CssBaseline from "@mui/material/CssBaseline";
+import Typography from "@mui/material/Typography";
+import { Button } from "@mui/material";
+import ReactPlayer from "react-player";
+
+export default function HomePage() {
+  const [isClient, setIsClient] = useState(false);
+  const theme = useTheme();
+  const [playVideo, setPlayVideo] = useState(false);
+  const { Featured: featuredMovie } = database;
+  const [featured, setFeatured] = useState(featuredMovie);
+  const durationByMinutes = Math.trunc(featured.Duration / 60);
+  const hours = Math.trunc(durationByMinutes / 60);
+  const minutes = durationByMinutes - hours * 60;
+  const shortInfo = `${featured.ReleaseYear} ${featured.MpaRating} ${hours}h ${minutes}m`;
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsClient(true);
+    }
+  }, []);
+
+  const handleMovieSelect = (movie) => {
+    setFeatured(movie);
+    setTimeout(setPlayVideo, "2000", true);
+    sessionStorage.setItem("movieId", movie.Id);
+  };
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>app/page.js</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <Box
+      component="main"
+      style={{
+        backgroundImage: playVideo ? "" : `url(/${featured.CoverImage})`,
+        backgroundPosition: "center center",
+        backgroundSize: "cover",
+        height: "100vh",
+        width: "100vw",
+        position: "relative",
+      }}
+    >
+      <Box width="100%" height="60%">
+        <Box display="flex">
+          <CssBaseline />
+          <MyDrawer />
+          <Box
+            component="main"
+            sx={{
+              p: 3,
+              color: "white",
+              width: "40%",
+              marginLeft: theme.spacing(7),
+              marginTop: theme.spacing(2),
+            }}
           >
-            By{' '}
+            <Typography
+              variant="button"
+              sx={{ color: "gray", fontSize: "2rem" }}
+            >
+              {featured.Category}
+            </Typography>
             <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
+              src={`/FeaturedTitleImage.png`}
+              alt="featuredImage"
+              width={683}
+              height={84}
             />
-          </a>
-        </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
+            <Typography mb={3} variant="h6">
+              {shortInfo}
+            </Typography>
+            <Typography paragraph>{featured.Description}</Typography>
+            <Box display="flex" mt={1}>
+              <Button
+                variant="contained"
+                style={{
+                  background: "white",
+                  color: "black",
+                  marginRight: theme.spacing(1),
+                  borderRadius: theme.spacing(3),
+                }}
+              >
+                <PlayArrowIcon />
+                Play
+              </Button>
+              <Button
+                variant="contained"
+                style={{ borderRadius: theme.spacing(3) }}
+              >
+                More Info
+              </Button>
+            </Box>
+          </Box>
+        </Box>
+        {isClient && playVideo && (
+          <ReactPlayer
+            url={featured.VideoUrl}
+            playing
+            width="100%"
+            height="98%"
+            style={{ position: "absolute", top: 0, left: 0, zIndex: 10000 }}
+            onEnded={() => {
+              setPlayVideo(false);
+            }}
+          />
+        )}
+      </Box>
+      {isClient && <Carusel selectMovie={handleMovieSelect} />}
+    </Box>
+  );
 }
